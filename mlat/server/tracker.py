@@ -207,9 +207,12 @@ class Tracker(object):
         # all aircraft that we are tracking but for
         # which we have no ADS-B rate (i.e. are not
         # transmitting positions)
+        
+        ###### change oli: allow multilateration on aircraft which is transmitting a position ########
         new_mlat_set = set()
         for ac in receiver.tracking:
-            if ac.icao not in receiver.last_rate_report and ac.allow_mlat:
+            #if ac.icao not in receiver.last_rate_report and ac.allow_mlat:
+            if ac.allow_mlat:
                 new_mlat_set.add(ac)
 
         receiver.update_interest_sets(new_sync_set, new_mlat_set)
