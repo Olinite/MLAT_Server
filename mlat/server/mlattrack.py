@@ -99,10 +99,14 @@ class MlatTracker(object):
     @profile.trackcpu
     def _resolve(self, group):
         del self.pending[group.message]
+        
+        glogger.info("TEST tracker")
 
         # less than 3 messages -> no go
         if len(group.copies) < 3:
             return
+        
+        glogger.info("TEST2 tracker")
 
         decoded = modes.message.decode(group.message)
 
@@ -329,7 +333,7 @@ def _cluster_timestamps(component, min_receivers):
     flat_component = []
     for receiver, (variance, timestamps) in component.items():
         for timestamp, utc in timestamps:
-            #glogger.info("  {r} {t:.1f}us {e:.1f}us".format(r=receiver.user, t=timestamp*1e6, e=error*1e6))
+            glogger.info("  {r} {t:.1f}us {e:.1f}us".format(r=receiver.user, t=timestamp*1e6, e=error*1e6))
             flat_component.append((receiver, timestamp, variance, utc))
 
     # sort by timestamp
@@ -350,13 +354,13 @@ def _cluster_timestamps(component, min_receivers):
     # is why we try to break up the component into
     # smaller groups first.
 
-    #glogger.info("{n} groups".format(n=len(groups)))
+    glogger.info("{n} groups".format(n=len(groups)))
 
     clusters = []
     for group in groups:
-        #glogger.info(" group:")
-        #for r, t, e in group:
-        #    glogger.info("  {r} {t:.1f}us {e:.1f}us".format(r=r.user, t=t*1e6, e=e*1e6))
+        glogger.info(" group:")
+        for r, t, e in group:
+            glogger.info("  {r} {t:.1f}us {e:.1f}us".format(r=r.user, t=t*1e6, e=e*1e6))
 
         while len(group) >= min_receivers:
             receiver, timestamp, variance, utc = group.pop()
@@ -365,35 +369,35 @@ def _cluster_timestamps(component, min_receivers):
             distinct_receivers = 1
             first_seen = utc
 
-            #glogger.info("forming cluster from group:")
-            #glogger.info("  0 = {r} {t:.1f}us".format(r=head[0].user, t=head[1]*1e6))
+            glogger.info("forming cluster from group:")
+            glogger.info("  0 = {r} {t:.1f}us".format(r=head[0].user, t=head[1]*1e6))
 
             for i in range(len(group) - 1, -1, -1):
                 receiver, timestamp, variance, utc = group[i]
-                #glogger.info("  consider {i} = {r} {t:.1f}us".format(i=i, r=receiver.user, t=timestamp*1e6))
+                glogger.info("  consider {i} = {r} {t:.1f}us".format(i=i, r=receiver.user, t=timestamp*1e6))
                 if (last_timestamp - timestamp) > 2e-3:
                     # Can't possibly be part of the same cluster.
                     #
                     # Note that this is a different test to the rough grouping above:
                     # that looks at the interval betwen _consecutive_ items, so a
                     # group might span a lot more than 2ms!
-                    #glogger.info("   discard: >2ms out")
+                    glogger.info("   discard: >2ms out")
                     break
 
                 # strict test for range, now.
                 is_distinct = can_cluster = True
                 for other_receiver, other_timestamp, other_variance in cluster:
                     if other_receiver is receiver:
-                        #glogger.info("   discard: duplicate receiver")
+                        glogger.info("   discard: duplicate receiver")
                         can_cluster = False
                         break
 
                     d = receiver.distance[other_receiver]
                     if abs(other_timestamp - timestamp) > (d * 1.05 + 1e3) / constants.Cair:
-                        #glogger.info("   discard: delta {dt:.1f}us > max {m:.1f}us for range {d:.1f}m".format(
-                        #    dt=abs(other_timestamp - timestamp)*1e6,
-                        #    m=(d * 1.05 + 1e3) / constants.Cair*1e6,
-                        #    d=d))
+                        glogger.info("   discard: delta {dt:.1f}us > max {m:.1f}us for range {d:.1f}m".format(
+                            dt=abs(other_timestamp - timestamp)*1e6,
+                            m=(d * 1.05 + 1e3) / constants.Cair*1e6,
+                            d=d))
                         can_cluster = False
                         break
 
@@ -401,11 +405,11 @@ def _cluster_timestamps(component, min_receivers):
                         # if receivers are closer than 1km, then
                         # only count them as one receiver for the 3-receiver
                         # requirement
-                        #glogger.info("   not distinct vs receiver {r}".format(r=other_receiver.user))
+                        glogger.info("   not distinct vs receiver {r}".format(r=other_receiver.user))
                         is_distinct = False
 
                 if can_cluster:
-                    #glogger.info("   accept")
+                    glogger.info("   accept")
                     cluster.append((receiver, timestamp, variance))
                     first_seen = min(first_seen, utc)
                     del group[i]
